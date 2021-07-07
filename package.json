@@ -1,0 +1,20 @@
+{
+  "name": "Video-Conferencing-App",
+  "version": "1.0.0",
+  "description": "Video Conferencing app using Nodejs with ExpressJs, Socket.io, EJS and PeerJs (WebRTC)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Farhan9182/Video-Conferencing-App.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Farhan9182/Video-Conferencing-App/issues"
+  },
+  "homepage": "https://github.com/Farhan9182/Video-Conferencing-App#readme"
+}

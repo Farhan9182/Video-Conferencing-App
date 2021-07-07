@@ -30,13 +30,12 @@ video {
   display: flex;
 }
 .main__left {
-  flex: 0.8;
+  flex: 1.0;
   display: flex;
   flex-direction: column;
 }
 .main__right {
-  flex: 0.2;
-  display: flex;
+  display: none;
   flex-direction: column;
   background-color: #242324;
   border-left: 1px solid #3d3d42;
@@ -98,6 +97,7 @@ video {
 .main__message_container {
   padding: 22px 11px;
   display: flex;
+  
 }
 .main__message_container input {
   flex-grow: 1;

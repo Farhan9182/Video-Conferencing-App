@@ -4,7 +4,8 @@
   "description": "Video Conferencing app using Nodejs with ExpressJs, Socket.io, EJS and PeerJs (WebRTC)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",

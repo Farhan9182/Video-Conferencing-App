@@ -2,7 +2,7 @@
   "name": "Video-Conferencing-App",
   "version": "1.0.0",
   "description": "Video Conferencing app using Nodejs with ExpressJs, Socket.io, EJS and PeerJs (WebRTC)",
-  "main": "server.js",
+  "main": "dist/index",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
@@ -23,7 +23,7 @@
     "ejs": "^3.1.5",
     "express": "^4.17.1",
     "peer": "^0.5.3",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.1",
     "uuid": "^8.3.0"
   }
 }

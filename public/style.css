@@ -117,3 +117,21 @@ video {
 .unmute {
   color: red;
 }
+.overlayText {
+    position:absolute;
+     top:0;
+     left:0;
+     z-index:1;
+   }
+   
+   .topText {
+     color: white;
+     font-size: 20px;
+     align-self: center;
+   }
+   .sharescreen{
+       position: absolute;
+   }
+   .sharescreen > video{
+    z-index: 20;   
+}

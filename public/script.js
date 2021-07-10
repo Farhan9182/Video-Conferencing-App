@@ -10,13 +10,13 @@ myVideo.muted = true;
 const user = prompt("Enter your name");
 
 var peer = new Peer(undefined, {
-    path: "/peerjs",
     host: "/",
-    port: "443",
+    port: "443"
 });
 
+const peers = {};
 let myVideoStream;
-
+var currentPeer;
 var getUserMedia =
     navigator.getUserMedia ||
     navigator.webkitGetUserMedia ||
@@ -26,6 +26,7 @@ navigator.mediaDevices
     .getUserMedia({
         video: true,
         audio: true,
+
     })
     .then((stream) => {
         myVideoStream = stream;
@@ -37,7 +38,9 @@ navigator.mediaDevices
 
             call.on("stream", (userVideoStream) => {
                 addVideoStream(video, userVideoStream);
+                currentPeer = call.peerConnection;
             });
+
         });
 
         socket.on("user-connected", (userId) => {
@@ -51,14 +54,30 @@ navigator.mediaDevices
             }
         });
 
-        socket.on("createMessage", (msg) => {
+        socket.on("createMessage", (msg, username) => {
             console.log(msg);
             let li = document.createElement("li");
-            li.innerHTML = msg;
+            if (username == user) {
+                li.innerHTML = "Me: " + msg;
+                li.style.textAlign = "right";
+            } else {
+                li.innerHTML = username + ": " + msg;
+            }
+
             all_messages.append(li);
             main__chat__window.scrollTop = main__chat__window.scrollHeight;
         });
     });
+
+socket.on('user-disconnected', userId => {
+    if (peers[userId]) {
+        peers[userId].close();
+    }
+})
+
+peer.on("open", (id) => {
+    socket.emit("join-room", ROOM_ID, id, user);
+});
 
 peer.on("call", function (call) {
     getUserMedia(
@@ -68,6 +87,7 @@ peer.on("call", function (call) {
             const video = document.createElement("video");
             call.on("stream", function (remoteStream) {
                 addVideoStream(video, remoteStream);
+                currentPeer = call.peerConnection;
             });
         },
         function (err) {
@@ -76,18 +96,15 @@ peer.on("call", function (call) {
     );
 });
 
-peer.on("open", (id) => {
-    socket.emit("join-room", ROOM_ID, id, user);
-});
 
 //INVITE
 const inviteButton = document.querySelector("#inviteButton");
 inviteButton.addEventListener("click", (e) => {
     prompt(
-      "Copy this link and send it to people you want to meet with",
-      window.location.href
+        "Copy this link and send it to people you want to meet with",
+        window.location.href
     );
-  });
+});
 
 // CHAT
 
@@ -99,15 +116,26 @@ const connectToNewUser = (userId, streams) => {
         console.log(userVideoStream);
         addVideoStream(video, userVideoStream);
     });
+
+    currentPeer = call.peerConnection
+
+    call.on('close', () => {
+        video.remove();
+    })
+
+    peers[userId] = call;
 };
 
 const addVideoStream = (videoEl, stream) => {
+    console.log(stream);
     videoEl.srcObject = stream;
+    videoEl.title = user;
     videoEl.addEventListener("loadedmetadata", () => {
         videoEl.play();
     });
 
     videoGrid.append(videoEl);
+
     let totalUsers = document.getElementsByTagName("video").length;
     if (totalUsers > 1) {
         for (let index = 0; index < totalUsers; index++) {
@@ -115,84 +143,181 @@ const addVideoStream = (videoEl, stream) => {
                 100 / totalUsers + "%";
         }
     }
+
+    
 };
 
 const playStop = () => {
     let enabled = myVideoStream.getVideoTracks()[0].enabled;
-    
+
     if (enabled) {
-        myVideoStream.getVideoTracks()[0].stop();
         myVideoStream.getVideoTracks()[0].enabled = false;
         setPlayVideo();
     } else {
-        
-        setStopVideo();
-        var getUserMedia =
-            navigator.getUserMedia ||
-            navigator.webkitGetUserMedia ||
-            navigator.mozGetUserMedia;
 
-        navigator.mediaDevices
-            .getUserMedia({
-                video: true,
-                audio: true,
-            })
-            .then((stream) => {
-                myVideoStream = stream;
-                addVideoStream(myVideo, stream);
-            });
+        setStopVideo();
+        myVideoStream.getVideoTracks()[0].enabled = true;
     }
 };
 
-    const muteUnmute = () => {
-        const enabled = myVideoStream.getAudioTracks()[0].enabled;
-        if (enabled) {
-            myVideoStream.getAudioTracks()[0].enabled = false;
-            setUnmuteButton();
-        } else {
-            setMuteButton();
-            myVideoStream.getAudioTracks()[0].enabled = true;
-        }
-    };
+const muteUnmute = () => {
+    const enabled = myVideoStream.getAudioTracks()[0].enabled;
+    if (enabled) {
+        myVideoStream.getAudioTracks()[0].enabled = false;
+        setUnmuteButton();
+    } else {
+        setMuteButton();
+        myVideoStream.getAudioTracks()[0].enabled = true;
+    }
+};
 
-    const setPlayVideo = () => {
-        const html = `<i class="unmute fa fa-pause-circle"></i>
+const setPlayVideo = () => {
+    const html = `<i class="unmute fa fa-pause-circle"></i>
     <span class="unmute">Resume Video</span>`;
-        document.getElementById("playPauseVideo").innerHTML = html;
-    };
+    document.getElementById("playPauseVideo").innerHTML = html;
+};
 
-    const setStopVideo = () => {
-        const html = `<i class=" fa fa-video-camera"></i>
+const setStopVideo = () => {
+    const html = `<i class=" fa fa-video-camera"></i>
     <span class="">Pause Video</span>`;
-        document.getElementById("playPauseVideo").innerHTML = html;
-    };
+    document.getElementById("playPauseVideo").innerHTML = html;
+};
 
-    const setUnmuteButton = () => {
-        const html = `<i class="unmute fa fa-microphone-slash"></i>
+const setUnmuteButton = () => {
+    const html = `<i class="unmute fa fa-microphone-slash"></i>
     <span class="unmute">Unmute</span>`;
-        document.getElementById("muteButton").innerHTML = html;
-    };
-    const setMuteButton = () => {
-        const html = `<i class="fa fa-microphone"></i>
+    document.getElementById("muteButton").innerHTML = html;
+};
+const setMuteButton = () => {
+    const html = `<i class="fa fa-microphone"></i>
     <span>Mute</span>`;
-        document.getElementById("muteButton").innerHTML = html;
-    };
+    document.getElementById("muteButton").innerHTML = html;
+};
 
-    const showChat = () => {
-        let elem1 = document.querySelector(".main__right");
-        let elem2 = document.querySelector(".main__left");
+const showChat = () => {
+    let elem1 = document.querySelector(".main__right");
+    let elem2 = document.querySelector(".main__left");
 
-        if (elem1.style.display == "none") {
-            elem2.style.flex = 0.8;
-            elem1.style.flex = 0.2;
-            elem1.style.display = "flex";
-        }
-        else {
-            elem2.style.flex = 1.0;
-            elem1.style.flex = 0.0;
-            elem1.style.display = "none";
-        }
-
+    if (elem1.style.display == "none") {
+        elem2.style.flex = 0.8;
+        elem1.style.flex = 0.2;
+        elem1.style.display = "flex";
+    }
+    else {
+        elem2.style.flex = 1.0;
+        elem1.style.flex = 0.0;
+        elem1.style.display = "none";
     }
 
-    console.log("Refreshed");
+}
+
+document.querySelector('#share__Btn').addEventListener("click", (e) => {
+    let count = document.querySelectorAll("#sharescreen").length;
+    if (count == 0) {
+        navigator.mediaDevices.getDisplayMedia({ 
+            video:{
+                cursor: "always"
+            },
+            audio:{
+                echoCancellation : true,
+                noiseSuppression: true
+            }
+         }).then(stream => {
+            let videoTrack = stream.getVideoTracks()[0];
+            videoTrack.onended = () =>{
+                stopScreenShare();
+            }
+            let sender = currentPeer.getSenders().find(function(s){
+                return s.track.kind == videoTrack.kind
+            });
+
+            sender.replaceTrack(videoTrack);
+        })
+    }
+    else {
+        alert('Someone is already presenting.')
+    }
+});
+
+const stopScreenShare = () =>{
+    let videoTrack = myVideoStream.getVideoTracks()[0];
+    var sender = currentPeer.getSenders().find(function(s){
+        return s.track.kind == videoTrack.kind;
+    })
+
+    sender.replaceTrack(videoTrack);
+}
+// const shareScreen = (userId, username, stream) => {
+//     var call = peer.call(userId, stream);
+
+//     call.on("stream", (userVideoStream) => {
+//         startScreenShare(userVideoStream,username);
+//     });
+
+//     call.on('close', () => {
+//         video.remove();
+//     })
+
+//     peers[userId] = call;
+// };
+
+// const startScreenShare = (stream,username) => {
+//     alert(`${username} has started screen sharing.`)
+//     const screenTrack = stream.getTracks()[0];
+//     let div = document.createElement('div');
+//     div.id = 'sharescreen';
+//     div.classList.add('sharescreen');
+//     var video = document.createElement("video");
+//     video.srcObject = stream;
+//     video.controls = true;
+//     video.autoplay = true;
+
+//     div.appendChild(video);
+//     let grid = document.getElementById('video-grid');
+//     grid.append(div);
+
+//     screenTrack.onended = function () {
+//         div.remove();
+//     }
+
+// }
+
+// function shareScreen() {
+//     navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(stream => {
+//         const screenTrack = stream.getTracks()[0];
+//         let count = document.querySelectorAll("#sharescreen").length;
+//         if (count == 0) {
+//             console.log(stream);
+//             let div = document.createElement('div');
+//             div.id = 'sharescreen';
+//             div.classList.add('sharescreen');
+//             let video = document.createElement('video');
+//             video.srcObject = stream;
+//             video.controls = true;
+//             video.autoplay = true;
+
+//             div.appendChild(video);
+//             let grid = document.getElementById('video-grid');
+//             grid.append(div);
+
+//             screenTrack.onended = function () {
+//                 div.remove();
+//             }
+//         }
+//         else {
+//             alert('Someone is already presenting.')
+//         }
+
+//         // senders.current.find(sender => sender.track.kind === 'video').replaceTrack(screenTrack);
+//         // screenTrack.onended = function () {
+//         //     senders.current.find(sender => sender.track.kind === "video").replaceTrack(userStream.current.getTracks()[1]);
+//         // }
+//     })
+// }
+
+const close_window = () => {
+    if (confirm("Leave Meeting?")) {
+        window.open("http://left-meeting.com", "_self");
+    }
+}
+console.log("Refreshed");

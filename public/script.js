@@ -1,4 +1,9 @@
 const socket = io("/");
+var peer = new Peer(undefined, {
+    host: "/",
+    port: "443"
+});
+
 const chatInputBox = document.getElementById("chat_message");
 const all_messages = document.getElementById("all_messages");
 const main__chat__window = document.getElementById("main__chat__window");
@@ -9,10 +14,6 @@ myVideo.muted = true;
 
 const user = prompt("Enter your name");
 
-var peer = new Peer(undefined, {
-    host: "/",
-    port: "443"
-});
 
 const peers = {};
 let myVideoStream;
